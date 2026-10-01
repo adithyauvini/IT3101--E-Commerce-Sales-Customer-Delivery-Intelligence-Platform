@@ -1,46 +1,121 @@
-import pandas as pd
 from pathlib import Path
+import pandas as pd
 
-# Location of the raw CSV files
-RAW_FOLDER = Path("data/raw")
 
-print("=" * 70)
-print("OLIST E-COMMERCE DATA QUALITY CHECK")
-print("=" * 70)
+# ---------------------------------------------------------
+# Project paths
+# ---------------------------------------------------------
 
-# Find all CSV files
-csv_files = list(RAW_FOLDER.glob("*.csv"))
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+RAW_FOLDER = PROJECT_ROOT / "data" / "raw"
 
-# Check every CSV file
-for file in csv_files:
 
-    print(f"\n{'=' * 20} {file.name} {'=' * 20}")
+# ---------------------------------------------------------
+# Expected source files
+# ---------------------------------------------------------
 
-    # Read the CSV
-    df = pd.read_csv(file)
+SOURCE_FILES = [
+    "olist_customers_dataset.csv",
+    "olist_geolocation_dataset.csv",
+    "olist_orders_dataset.csv",
+    "olist_order_items_dataset.csv",
+    "olist_order_payments_dataset.csv",
+    "olist_order_reviews_dataset.csv",
+    "olist_products_dataset.csv",
+    "olist_sellers_dataset.csv",
+    "product_category_name_translation.csv",
+]
 
-    print(f"Rows: {len(df):,}")
-    print(f"Columns: {len(df.columns)}")
 
-    print("\nMissing values:")
+print("=" * 80)
+print("OLIST SOURCE DATA QUALITY PROFILE")
+print("=" * 80)
 
-    missing = df.isnull().sum()
+print(f"\nRaw data folder:\n{RAW_FOLDER}\n")
 
-    # Display only columns containing missing values
-    missing_found = False
 
-    for column, count in missing.items():
-        if count > 0:
-            missing_found = True
+# ---------------------------------------------------------
+# Verify files
+# ---------------------------------------------------------
+
+missing_files = [
+    file_name
+    for file_name in SOURCE_FILES
+    if not (RAW_FOLDER / file_name).exists()
+]
+
+if missing_files:
+    print("ERROR: The following source files are missing:")
+
+    for file_name in missing_files:
+        print(f" - {file_name}")
+
+    raise SystemExit(1)
+
+
+print(f"All {len(SOURCE_FILES)} expected CSV files were found.")
+
+
+# ---------------------------------------------------------
+# Profile each dataset
+# ---------------------------------------------------------
+
+for file_name in SOURCE_FILES:
+
+    file_path = RAW_FOLDER / file_name
+
+    print("\n" + "=" * 80)
+    print(f"FILE: {file_name}")
+    print("=" * 80)
+
+    try:
+        df = pd.read_csv(
+            file_path,
+            low_memory=False
+        )
+
+    except Exception as error:
+        print(f"ERROR reading file: {error}")
+        continue
+
+    # Basic information
+    print(f"Rows       : {len(df):,}")
+    print(f"Columns    : {len(df.columns):,}")
+    print(f"Duplicates : {df.duplicated().sum():,}")
+
+    # Column names
+    print("\nColumns:")
+    for column in df.columns:
+        print(f" - {column}")
+
+    # Data types
+    print("\nDetected Data Types:")
+    for column, dtype in df.dtypes.items():
+        print(f" - {column}: {dtype}")
+
+    # Missing values
+    null_counts = df.isna().sum()
+    null_counts = null_counts[null_counts > 0]
+
+    print("\nMissing Values:")
+
+    if null_counts.empty:
+        print(" None")
+    else:
+        for column, count in null_counts.items():
+
             percentage = (count / len(df)) * 100
+
             print(
-                f"  {column}: {count:,} "
+                f" - {column}: "
+                f"{count:,} "
                 f"({percentage:.2f}%)"
             )
 
-    if not missing_found:
-        print("  No missing values found.")
+    # Free memory before loading next file
+    del df
 
-print("\n" + "=" * 70)
-print("DATA QUALITY CHECK COMPLETED")
-print("=" * 70)
+
+print("\n" + "=" * 80)
+print("DATA QUALITY PROFILING COMPLETE")
+print("=" * 80)
