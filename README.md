@@ -45,9 +45,9 @@ Database schemas:
 
 ---
 
-# 2. Recommended Project Folder Structure
+# 2. Project Folder Structure
 
-A recommended final folder structure is:
+The final folder structure is:
 
     IT3101-Olist-Rebuild
     │
@@ -655,4 +655,4 @@ The corrected solution includes:
     Business Insights       COMPLETE
     Documentation           COMPLETE
 
-The remaining submission work is focused on final screenshots, diagrams, report preparation, and packaging of technical files.
+The remaining submission work is focused on final screenshots, diagrams, report preparation and packaging of technical files.
